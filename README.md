@@ -2,11 +2,16 @@
 
 SpawnDock bootstrap CLI for local TMA projects.
 
-## Usage
+This repository now follows an `effect-template`-style layout:
 
-```bash
-npx create-spawn-dock --token <pairing-token> [project-dir]
-```
+- root workspace with `packages/app`
+- TypeScript + Effect entrypoint
+- no embedded TMA starter overlay inside the CLI repo
+
+The canonical TMA starter lives only in `https://github.com/SpawnDock/tma-project`.
+`create-spawn-dock` clones that repo and writes only project-specific runtime files.
+
+## Usage
 
 Until the npm package is published, run it directly from GitHub:
 
@@ -14,19 +19,26 @@ Until the npm package is published, run it directly from GitHub:
 npx --yes github:SpawnDock/create-spawn-dock#main --token <pairing-token> [project-dir]
 ```
 
-## What it does
+After npm publish, the intended short form remains:
 
-- clones `SpawnDock/tma-project`
-- claims the pairing token against the control plane
-- writes `spawndock.config.json`, `.env.local`, `spawndock.dev-tunnel.json`, and `opencode.json`
-- installs dependencies in the generated project
+```bash
+npx create-spawn-dock --token <pairing-token> [project-dir]
+```
 
-## Generated MCP URL
+## What it writes
 
-The bootstrap writes `MCP_SERVER_URL` to `<controlPlaneUrl>/mcp/sse`.
+- `spawndock.config.json`
+- `.env.local`
+- `spawndock.dev-tunnel.json`
+- `opencode.json`
+- `public/tonconnect-manifest.json`
+
+Generated MCP config points to `<controlPlaneUrl>/mcp/sse`.
 
 ## Development
 
 ```bash
-npm test
+pnpm install
+pnpm test
+pnpm build
 ```
