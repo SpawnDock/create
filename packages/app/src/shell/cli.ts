@@ -1,29 +1,43 @@
-export const DEFAULT_PROJECT_DIR = "spawndock-tma"
-export const DEFAULT_CONTROL_PLANE_URL = "https://api.spawndock.app"
-export const DEFAULT_CLAIM_PATH = "/v1/bootstrap/claim"
-export const DEFAULT_TEMPLATE_REPO = "https://github.com/SpawnDock/tma-project.git"
-export const DEFAULT_TEMPLATE_BRANCH = "master"
-export const TEMPLATE_ID = "nextjs-template"
+import { Effect } from "effect"
+import {
+  DEFAULT_CLAIM_PATH,
+  DEFAULT_CONTROL_PLANE_URL,
+  DEFAULT_PROJECT_DIR,
+  DEFAULT_TEMPLATE_BRANCH,
+  DEFAULT_TEMPLATE_REPO,
+  type CliOptions,
+} from "../core/bootstrap.js"
 
-export const normalizeDisplayName = (value) =>
-  value
-    .split(/[^a-zA-Z0-9]+/g)
-    .filter(Boolean)
-    .map((segment) => segment[0].toUpperCase() + segment.slice(1).toLowerCase())
-    .join(" ")
+export const formatUsage = (
+  invocation = "npx create-spawn-dock --token <pairing-token> [project-dir]",
+): string => `Usage: ${invocation}`
 
-export const parseArgs = (argv, env = process.env) => {
-  const result = {
+export const parseArgs = (
+  argv: ReadonlyArray<string>,
+  env: NodeJS.ProcessEnv = process.env,
+): CliOptions => {
+  const result: {
+    token: string
+    controlPlaneUrl: string
+    claimPath: string
+    projectDir: string
+    templateRepo: string
+    templateBranch: string
+  } = {
     token: "",
-    controlPlaneUrl: env.SPAWNDOCK_CONTROL_PLANE_URL ?? DEFAULT_CONTROL_PLANE_URL,
-    claimPath: env.SPAWNDOCK_CLAIM_PATH ?? DEFAULT_CLAIM_PATH,
+    controlPlaneUrl: env["SPAWNDOCK_CONTROL_PLANE_URL"] ?? DEFAULT_CONTROL_PLANE_URL,
+    claimPath: env["SPAWNDOCK_CLAIM_PATH"] ?? DEFAULT_CLAIM_PATH,
     projectDir: DEFAULT_PROJECT_DIR,
-    templateRepo: env.SPAWNDOCK_TEMPLATE_REPO ?? DEFAULT_TEMPLATE_REPO,
-    templateBranch: env.SPAWNDOCK_TEMPLATE_BRANCH ?? DEFAULT_TEMPLATE_BRANCH
+    templateRepo: env["SPAWNDOCK_TEMPLATE_REPO"] ?? DEFAULT_TEMPLATE_REPO,
+    templateBranch: env["SPAWNDOCK_TEMPLATE_BRANCH"] ?? DEFAULT_TEMPLATE_BRANCH,
   }
 
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index]
+
+    if (value === undefined) {
+      continue
+    }
 
     if (value === "--token") {
       result.token = argv[index + 1] ?? ""
@@ -89,5 +103,7 @@ export const parseArgs = (argv, env = process.env) => {
     }
   }
 
-  return result
+  return result satisfies CliOptions
 }
+
+export const readCliOptions = Effect.sync(() => parseArgs(process.argv.slice(2), process.env))
