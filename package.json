@@ -1,5 +1,5 @@
 {
-  "name": "create-spawn-dock",
+  "name": "@spawn-dock/create-spawn-dock",
   "version": "0.2.0",
   "type": "module",
   "description": "SpawnDock bootstrap CLI for local TMA projects",
@@ -28,11 +28,11 @@
   },
   "scripts": {
     "prepare": "node ./scripts/prepare.mjs",
-    "build": "pnpm --filter @create-spawn-dock/app build",
-    "check": "pnpm --filter @create-spawn-dock/app check",
-    "test": "pnpm --filter @create-spawn-dock/app test",
-    "typecheck": "pnpm --filter @create-spawn-dock/app typecheck",
-    "start": "pnpm --filter @create-spawn-dock/app start"
+    "build": "pnpm --filter @spawn-dock/create-spawn-dock-app build",
+    "check": "pnpm --filter @spawn-dock/create-spawn-dock-app check",
+    "test": "pnpm --filter @spawn-dock/create-spawn-dock-app test",
+    "typecheck": "pnpm --filter @spawn-dock/create-spawn-dock-app typecheck",
+    "start": "pnpm --filter @spawn-dock/create-spawn-dock-app start"
   },
   "dependencies": {
     "@effect/platform-node": "^0.106.0",

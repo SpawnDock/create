@@ -22,7 +22,7 @@ npx --yes github:SpawnDock/create-spawn-dock#main --token <pairing-token> [proje
 After npm publish, the intended short form remains:
 
 ```bash
-npx create-spawn-dock --token <pairing-token> [project-dir]
+npx @spawn-dock/create-spawn-dock --token <pairing-token> [project-dir]
 ```
 
 ## What it writes
