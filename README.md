@@ -14,16 +14,14 @@ and then writes project-specific runtime files.
 
 ## Usage
 
-Until the npm package is published, run it directly from GitHub:
+```bash
+npx @spawn-dock/create-spawn-dock --token <pairing-token> [project-dir]
+```
+
+If npm registry access is unavailable, the GitHub fallback remains:
 
 ```bash
 npx --yes github:SpawnDock/create-spawn-dock#main --token <pairing-token> [project-dir]
-```
-
-After npm publish, the intended short form remains:
-
-```bash
-npx @spawn-dock/create-spawn-dock --token <pairing-token> [project-dir]
 ```
 
 ## What it writes
