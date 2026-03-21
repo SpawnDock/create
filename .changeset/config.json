@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "SpawnDock/create-spawn-dock"
+      "repo": "SpawnDock/create"
     }
   ],
   "commit": false,

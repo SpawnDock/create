@@ -1,5 +1,5 @@
 {
-  "name": "@spawn-dock/create-spawn-dock",
+  "name": "@spawn-dock/create",
   "version": "0.2.0",
   "type": "module",
   "description": "SpawnDock bootstrap CLI for local TMA projects",
@@ -10,11 +10,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SpawnDock/create-spawn-dock.git"
+    "url": "git+https://github.com/SpawnDock/create.git"
   },
   "homepage": "https://github.com/SpawnDock/create-spawn-dock#readme",
   "bugs": {
-    "url": "https://github.com/SpawnDock/create-spawn-dock/issues"
+    "url": "https://github.com/SpawnDock/create/issues"
   },
   "publishConfig": {
     "access": "public"
@@ -25,15 +25,15 @@
     "packages/app/template-nextjs-overlay"
   ],
   "bin": {
-    "create-spawn-dock": "./packages/app/dist/src/app/main.js"
+    "create": "./packages/app/dist/src/app/main.js"
   },
   "scripts": {
     "prepare": "node ./scripts/prepare.mjs",
-    "build": "pnpm --filter @spawn-dock/create-spawn-dock-app build",
-    "check": "pnpm --filter @spawn-dock/create-spawn-dock-app check",
-    "test": "pnpm --filter @spawn-dock/create-spawn-dock-app test",
-    "typecheck": "pnpm --filter @spawn-dock/create-spawn-dock-app typecheck",
-    "start": "pnpm --filter @spawn-dock/create-spawn-dock-app start"
+    "build": "pnpm --filter @spawn-dock/create-app build",
+    "check": "pnpm --filter @spawn-dock/create-app check",
+    "test": "pnpm --filter @spawn-dock/create-app test",
+    "typecheck": "pnpm --filter @spawn-dock/create-app typecheck",
+    "start": "pnpm --filter @spawn-dock/create-app start"
   },
   "dependencies": {
     "effect": "^3.21.0"

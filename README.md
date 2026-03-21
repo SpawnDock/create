@@ -1,4 +1,4 @@
-# create-spawn-dock
+# @spawn-dock/create
 
 SpawnDock bootstrap CLI for local TMA projects.
 
@@ -9,19 +9,19 @@ This repository now follows an `effect-template`-style layout:
 - built-in TMA overlay bundled inside the CLI repo
 
 The canonical TMA starter lives in `https://github.com/SpawnDock/tma-project`.
-`create-spawn-dock` clones that repo, applies the bundled SpawnDock TMA overlay,
+`@spawn-dock/create` clones that repo, applies the bundled SpawnDock TMA overlay,
 and then writes project-specific runtime files.
 
 ## Usage
 
 ```bash
-npx @spawn-dock/create-spawn-dock --token <pairing-token> [project-dir]
+npx @spawn-dock/create --token <pairing-token> [project-dir]
 ```
 
 If npm registry access is unavailable, the GitHub fallback remains:
 
 ```bash
-npx --yes github:SpawnDock/create-spawn-dock#main --token <pairing-token> [project-dir]
+npx --yes github:SpawnDock/create#main --token <pairing-token> [project-dir]
 ```
 
 ## What it writes
