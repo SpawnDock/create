@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  buildCodexMcpCommandArgs,
   buildGeneratedFiles,
   buildMcpServerUrl,
   normalizeDisplayName,
@@ -28,6 +29,22 @@ describe("buildMcpServerUrl", () => {
   })
 })
 
+describe("buildCodexMcpCommandArgs", () => {
+  it("builds the global Codex MCP registration command", () => {
+    expect(buildCodexMcpCommandArgs("https://api.example.com/mcp/sse")).toEqual([
+      "mcp",
+      "add",
+      "spawndock",
+      "--env",
+      "MCP_SERVER_URL=https://api.example.com/mcp/sse",
+      "--",
+      "npx",
+      "-y",
+      "@spawn-dock/mcp",
+    ])
+  })
+})
+
 describe("buildGeneratedFiles", () => {
   it("creates runtime files for the overlaid starter", () => {
     const files = buildGeneratedFiles(
@@ -49,7 +66,9 @@ describe("buildGeneratedFiles", () => {
 
     const fileMap = new Map(files.map((file) => [file.path, file.content]))
 
-    expect(fileMap.get("opencode.json")).toContain("\"MCP_SERVER_URL\": \"https://api.example.com/mcp/sse\"")
+    expect(fileMap.has("opencode.json")).toBe(false)
+    expect(fileMap.has(".mcp.json")).toBe(false)
+    expect(fileMap.get("spawndock.config.json")).toContain("\"mcpServerUrl\": \"https://api.example.com/mcp/sse\"")
     expect(fileMap.get("public/tonconnect-manifest.json")).toContain("\"url\": \"https://api.example.com/preview/demo-project\"")
     expect(fileMap.get("spawndock.dev-tunnel.json")).toContain("\"projectSlug\": \"demo-project\"")
   })
@@ -68,5 +87,6 @@ describe("patchPackageJsonContent", () => {
     expect(output).toContain("\"dev:next\": \"node ./spawndock/next.mjs\"")
     expect(output).toContain("\"dev:tunnel\": \"node ./spawndock/tunnel.mjs\"")
     expect(output).toContain("\"@spawn-dock/dev-tunnel\": \"latest\"")
+    expect(output).toContain("\"@spawn-dock/mcp\": \"latest\"")
   })
 })

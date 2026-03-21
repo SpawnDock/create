@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url"
 import { dirname, join, resolve } from "node:path"
 import { Effect } from "effect"
 import {
+  buildCodexMcpCommandArgs,
   buildGeneratedFiles,
+  buildMcpServerUrl,
+  DEFAULT_MCP_AGENTS,
   type BootstrapClaim,
   type BootstrapSummary,
   type CliOptions,
@@ -46,11 +49,13 @@ export const bootstrapProject = (
 
     yield* writeGeneratedFilesToProject(projectDir, context, claim)
     yield* installDependencies(projectDir)
+    const mcpAgents = yield* registerAgentIntegrations(projectDir, claim)
 
     return {
       projectDir,
       projectName: context.projectName,
       previewOrigin: claim.previewOrigin,
+      mcpAgents,
     }
   })
 
@@ -187,6 +192,43 @@ const installDependencies = (projectDir: string): Effect.Effect<void, Error> =>
     yield* runCommand("pnpm", ["install"], projectDir)
   })
 
+const registerAgentIntegrations = (
+  projectDir: string,
+  claim: BootstrapClaim,
+): Effect.Effect<ReadonlyArray<string>, Error> =>
+  Effect.gen(function* () {
+    const integrations: string[] = [...DEFAULT_MCP_AGENTS]
+    const mcpServerUrl = buildMcpServerUrl(claim.controlPlaneUrl)
+    const codexRegistered = yield* registerCodexIntegration(projectDir, mcpServerUrl)
+
+    if (codexRegistered) {
+      integrations.push("Codex")
+    }
+
+    return integrations
+  })
+
+const registerCodexIntegration = (
+  projectDir: string,
+  mcpServerUrl: string,
+): Effect.Effect<boolean, Error> =>
+  Effect.gen(function* () {
+    const codexAvailable = yield* commandExists("codex")
+
+    if (!codexAvailable) {
+      return false
+    }
+
+    const result = yield* runCommand(
+      "codex",
+      buildCodexMcpCommandArgs(mcpServerUrl),
+      projectDir,
+      false,
+    )
+
+    return result.status === 0
+  })
+
 const runCommand = (
   command: string,
   args: ReadonlyArray<string>,
@@ -210,6 +252,28 @@ const runCommand = (
       }
 
       return result
+    },
+    catch: toError,
+  })
+
+const commandExists = (command: string): Effect.Effect<boolean, Error> =>
+  Effect.try({
+    try: () => {
+      const result = spawnSync(command, ["--help"], {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        stdio: "ignore",
+      })
+
+      if (result.error) {
+        if (isNodeError(result.error) && result.error.code === "ENOENT") {
+          return false
+        }
+
+        throw toError(result.error)
+      }
+
+      return true
     },
     catch: toError,
   })

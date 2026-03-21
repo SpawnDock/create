@@ -34,6 +34,7 @@ export interface BootstrapSummary {
   readonly projectDir: string
   readonly projectName: string
   readonly previewOrigin: string
+  readonly mcpAgents: ReadonlyArray<string>
 }
 
 export interface GeneratedFile {
@@ -45,6 +46,8 @@ export interface OverlayFile {
   readonly path: string
   readonly content: string
 }
+
+export const DEFAULT_MCP_AGENTS = ["OpenCode", "Claude Code"] as const
 
 export const normalizeDisplayName = (value: string): string =>
   value
@@ -80,6 +83,18 @@ export const buildMcpServerUrl = (controlPlaneUrl: string): string => {
   url.pathname = normalizedPath.length > 0 ? `${normalizedPath}/mcp/sse` : "/mcp/sse"
   return url.toString()
 }
+
+export const buildCodexMcpCommandArgs = (mcpServerUrl: string): ReadonlyArray<string> => [
+  "mcp",
+  "add",
+  "spawndock",
+  "--env",
+  `MCP_SERVER_URL=${mcpServerUrl}`,
+  "--",
+  "npx",
+  "-y",
+  "@spawn-dock/mcp",
+]
 
 export const buildTonConnectManifest = (
   context: ProjectContext,
@@ -130,20 +145,6 @@ export const buildGeneratedFiles = (
     SPAWNDOCK_ALLOWED_DEV_ORIGINS: claim.previewOrigin,
   }
 
-  const opencode = {
-    $schema: "https://opencode.ai/config.json",
-    mcp: {
-      spawndock: {
-        type: "local",
-        command: ["npx", "-y", "@spawn-dock/mcp"],
-        enabled: true,
-        environment: {
-          MCP_SERVER_URL: mcpServerUrl,
-        },
-      },
-    },
-  }
-
   return [
     {
       path: "spawndock.config.json",
@@ -169,10 +170,6 @@ export const buildGeneratedFiles = (
       )}\n`,
     },
     {
-      path: "opencode.json",
-      content: `${JSON.stringify(opencode, null, 2)}\n`,
-    },
-    {
       path: "public/tonconnect-manifest.json",
       content: buildTonConnectManifest(context, claim),
     },
@@ -196,6 +193,7 @@ export const patchPackageJsonContent = (input: string): string => {
   packageJson.devDependencies = {
     ...(packageJson.devDependencies ?? {}),
     "@spawn-dock/dev-tunnel": "latest",
+    "@spawn-dock/mcp": "latest",
   }
 
   return `${JSON.stringify(packageJson, null, 2)}\n`

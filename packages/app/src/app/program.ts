@@ -9,6 +9,7 @@ const formatSuccess = (summary: BootstrapSummary): string =>
     `SpawnDock project created at ${summary.projectDir}`,
     `Project: ${summary.projectName}`,
     `Preview URL: ${summary.previewOrigin}`,
+    `MCP ready for: ${summary.mcpAgents.join(", ")}`,
     `Run: cd "${summary.projectDir}" && npm run dev`,
   ].join("\n")
 

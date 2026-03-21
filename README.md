@@ -29,7 +29,6 @@ npx --yes github:SpawnDock/create#main --token <pairing-token> [project-dir]
 - `spawndock.config.json`
 - `.env.local`
 - `spawndock.dev-tunnel.json`
-- `opencode.json`
 - `public/tonconnect-manifest.json`
 
 ## Built-in Overlay
@@ -40,11 +39,20 @@ The package also ships a built-in TMA overlay and applies it after cloning
 - `spawndock/dev.mjs`
 - `spawndock/next.mjs`
 - `spawndock/tunnel.mjs`
+- `spawndock/mcp.mjs`
+- `opencode.json`
+- `.mcp.json`
 - `next.config.ts`
 - `public/tonconnect-manifest.json`
 - patching project scripts and `@spawn-dock/dev-tunnel`
 
-Generated MCP config points to `<controlPlaneUrl>/mcp/sse`.
+`spawndock/mcp.mjs` resolves `<controlPlaneUrl>/mcp/sse` from
+`spawndock.config.json`.
+
+- `opencode.json` is shipped by the template for OpenCode.
+- `.mcp.json` is shipped by the template for Claude Code.
+- if `codex` is installed locally, bootstrap also registers the same MCP server in
+  the global Codex MCP config automatically.
 
 ## Development
 

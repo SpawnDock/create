@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "spawndock": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "./spawndock/mcp.mjs"
+      ]
+    }
+  }
+}
