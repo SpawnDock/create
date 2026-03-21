@@ -27,7 +27,7 @@
     "create-spawn-dock": "./packages/app/dist/src/app/main.js"
   },
   "scripts": {
-    "prepare": "corepack pnpm build",
+    "prepare": "node ./scripts/prepare.mjs",
     "build": "pnpm --filter @create-spawn-dock/app build",
     "check": "pnpm --filter @create-spawn-dock/app check",
     "test": "pnpm --filter @create-spawn-dock/app test",
