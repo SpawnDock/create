@@ -4,6 +4,7 @@ export const DEFAULT_CLAIM_PATH = "/v1/bootstrap/claim"
 export const DEFAULT_INSPECT_PATH = "/api/pairing/inspect"
 export const DEFAULT_TEMPLATE_REPO = "https://github.com/SpawnDock/tma-project.git"
 export const DEFAULT_TEMPLATE_BRANCH = "master"
+export const GENERATED_PACKAGE_MANAGER = "pnpm@10.32.1"
 export const TEMPLATE_ID = "nextjs-template"
 
 export interface CliOptions {
@@ -256,8 +257,11 @@ export const patchPackageJsonContent = (input: string): string => {
   const packageJson = JSON.parse(input) as {
     dependencies?: Record<string, string>
     devDependencies?: Record<string, string>
+    packageManager?: string
     scripts?: Record<string, string>
   }
+
+  packageJson.packageManager = GENERATED_PACKAGE_MANAGER
 
   packageJson.scripts = {
     ...(packageJson.scripts ?? {}),

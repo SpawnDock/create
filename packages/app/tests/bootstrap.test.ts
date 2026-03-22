@@ -5,6 +5,7 @@ import {
   buildMcpServerUrl,
   buildOpenCodeConfig,
   buildProjectMcpConfig,
+  GENERATED_PACKAGE_MANAGER,
   normalizeDisplayName,
   patchPackageJsonContent,
   resolveProjectContext,
@@ -115,7 +116,7 @@ describe("buildGeneratedFiles", () => {
 })
 
 describe("patchPackageJsonContent", () => {
-  it("injects overlay scripts and tunnel dependency", () => {
+  it("injects pnpm metadata, overlay scripts and tunnel dependency", () => {
     const output = patchPackageJsonContent(
       JSON.stringify({
         name: "demo",
@@ -123,6 +124,7 @@ describe("patchPackageJsonContent", () => {
       }),
     )
 
+    expect(output).toContain(`"packageManager": "${GENERATED_PACKAGE_MANAGER}"`)
     expect(output).toContain("\"dev\": \"node ./spawndock/dev.mjs\"")
     expect(output).toContain("\"dev:next\": \"node ./spawndock/next.mjs\"")
     expect(output).toContain("\"dev:tunnel\": \"node ./spawndock/tunnel.mjs\"")

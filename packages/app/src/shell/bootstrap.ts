@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
 import { spawnSync, type SpawnSyncReturns } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { dirname, join, resolve } from "node:path"
-import { Effect } from "effect"
+import { Console, Effect } from "effect"
 import {
   buildCodexMcpCommandArgs,
   buildGeneratedFiles,
@@ -272,12 +272,16 @@ const writeGeneratedFilesToProject = (
 
 const installDependencies = (projectDir: string): Effect.Effect<void, Error> =>
   Effect.gen(function* () {
+    yield* Console.log(`Installing project dependencies with pnpm in ${projectDir}...`)
+
     const corepackResult = yield* runCommand("corepack", ["pnpm", "install"], projectDir, false)
     if (corepackResult.status === 0) {
+      yield* Console.log("Dependencies installed with pnpm.")
       return
     }
 
     yield* runCommand("pnpm", ["install"], projectDir)
+    yield* Console.log("Dependencies installed with pnpm.")
   })
 
 const registerAgentIntegrations = (

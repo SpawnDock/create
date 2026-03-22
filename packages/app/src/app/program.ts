@@ -3,14 +3,15 @@ import { type BootstrapSummary, validateNodeMajorVersion } from "../core/bootstr
 import { bootstrapProject } from "../shell/bootstrap.js"
 import { formatUsage, readCliOptions } from "../shell/cli.js"
 
-const formatSuccess = (summary: BootstrapSummary): string =>
+export const formatSuccess = (summary: BootstrapSummary): string =>
   [
     "",
     `SpawnDock project created at ${summary.projectDir}`,
     `Project: ${summary.projectName}`,
     `Preview URL: ${summary.previewOrigin}`,
     `MCP ready for: ${summary.mcpAgents.join(", ")}`,
-    `Run: cd "${summary.projectDir}" && npm run dev`,
+    "Dependencies already installed with pnpm.",
+    `Run: cd "${summary.projectDir}" && pnpm run dev`,
   ].join("\n")
 
 const cliProgram = pipe(
