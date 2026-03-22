@@ -31,12 +31,14 @@ describe("buildMcpServerUrl", () => {
 
 describe("buildCodexMcpCommandArgs", () => {
   it("builds the global Codex MCP registration command", () => {
-    expect(buildCodexMcpCommandArgs("https://api.example.com/mcp/sse")).toEqual([
+    expect(buildCodexMcpCommandArgs("https://api.example.com/mcp/sse", "mcp_key_123")).toEqual([
       "mcp",
       "add",
       "spawndock",
       "--env",
       "MCP_SERVER_URL=https://api.example.com/mcp/sse",
+      "--env",
+      "MCP_SERVER_API_KEY=mcp_key_123",
       "--",
       "npx",
       "-y",
@@ -60,6 +62,7 @@ describe("buildGeneratedFiles", () => {
         controlPlaneUrl: "https://api.example.com",
         previewOrigin: "https://api.example.com/preview/demo-project",
         deviceSecret: "secret_123",
+        mcpApiKey: "mcp_key_123",
         localPort: 3000,
       },
     )
@@ -69,6 +72,7 @@ describe("buildGeneratedFiles", () => {
     expect(fileMap.has("opencode.json")).toBe(false)
     expect(fileMap.has(".mcp.json")).toBe(false)
     expect(fileMap.get("spawndock.config.json")).toContain("\"mcpServerUrl\": \"https://api.example.com/mcp/sse\"")
+    expect(fileMap.get("spawndock.config.json")).toContain("\"mcpApiKey\": \"mcp_key_123\"")
     expect(fileMap.get("public/tonconnect-manifest.json")).toContain("\"url\": \"https://api.example.com/preview/demo-project\"")
     expect(fileMap.get("spawndock.dev-tunnel.json")).toContain("\"projectSlug\": \"demo-project\"")
   })

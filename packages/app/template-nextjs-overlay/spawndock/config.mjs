@@ -27,3 +27,11 @@ export const resolveMcpServerUrl = (config) => {
 
   throw new Error("Missing mcpServerUrl or controlPlaneUrl in spawndock.config.json")
 }
+
+export const resolveMcpApiKey = (config) => {
+  if (typeof config.mcpApiKey === "string" && config.mcpApiKey.length > 0) {
+    return config.mcpApiKey
+  }
+
+  throw new Error("Missing mcpApiKey in spawndock.config.json")
+}
