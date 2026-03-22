@@ -1,5 +1,5 @@
 export const DEFAULT_PROJECT_DIR = ""
-export const DEFAULT_CONTROL_PLANE_URL = "http://49.13.117.55:3000"
+export const DEFAULT_CONTROL_PLANE_URL = "https://spawn-dock.w3voice.net"
 export const DEFAULT_CLAIM_PATH = "/v1/bootstrap/claim"
 export const DEFAULT_INSPECT_PATH = "/api/pairing/inspect"
 export const DEFAULT_TEMPLATE_REPO = "https://github.com/SpawnDock/tma-project.git"

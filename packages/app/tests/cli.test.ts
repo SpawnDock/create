@@ -40,7 +40,7 @@ describe("parseArgs", () => {
   it("defaults control plane URL to the production VPS endpoint", () => {
     const result = parseArgs(["--token", "abc"])
 
-    expect(result.controlPlaneUrl).toBe("http://49.13.117.55:3000")
+    expect(result.controlPlaneUrl).toBe("https://spawn-dock.w3voice.net")
   })
 
   it("reads template repo and branch overrides", () => {
