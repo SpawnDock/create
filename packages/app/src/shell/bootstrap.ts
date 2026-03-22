@@ -199,7 +199,7 @@ const registerAgentIntegrations = (
   Effect.gen(function* () {
     const integrations: string[] = [...DEFAULT_MCP_AGENTS]
     const mcpServerUrl = buildMcpServerUrl(claim.controlPlaneUrl)
-    const codexRegistered = yield* registerCodexIntegration(projectDir, mcpServerUrl)
+    const codexRegistered = yield* registerCodexIntegration(projectDir, mcpServerUrl, claim.mcpApiKey)
 
     if (codexRegistered) {
       integrations.push("Codex")
@@ -211,6 +211,7 @@ const registerAgentIntegrations = (
 const registerCodexIntegration = (
   projectDir: string,
   mcpServerUrl: string,
+  mcpApiKey: string,
 ): Effect.Effect<boolean, Error> =>
   Effect.gen(function* () {
     const codexAvailable = yield* commandExists("codex")
@@ -221,7 +222,7 @@ const registerCodexIntegration = (
 
     const result = yield* runCommand(
       "codex",
-      buildCodexMcpCommandArgs(mcpServerUrl),
+      buildCodexMcpCommandArgs(mcpServerUrl, mcpApiKey),
       projectDir,
       false,
     )
@@ -307,6 +308,9 @@ const parseClaimResponse = (
     readString(input, "deviceToken") ??
     readString(input, "deployToken") ??
     readString(input, "token")
+  const mcpApiKey =
+    readString(input, "mcpApiKey") ??
+    readString(input, "mcpToken")
   const localPort =
     readNumber(input, "localPort") ??
     (typeof fallbackLocalPort === "number" ? fallbackLocalPort : 3000)
@@ -315,7 +319,8 @@ const parseClaimResponse = (
     projectId === null ||
     projectSlug === null ||
     previewOrigin === null ||
-    deviceSecret === null
+    deviceSecret === null ||
+    mcpApiKey === null
   ) {
     return null
   }
@@ -326,6 +331,7 @@ const parseClaimResponse = (
     controlPlaneUrl,
     previewOrigin,
     deviceSecret,
+    mcpApiKey,
     localPort,
   }
 }

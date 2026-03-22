@@ -27,6 +27,7 @@ export interface BootstrapClaim {
   readonly controlPlaneUrl: string
   readonly previewOrigin: string
   readonly deviceSecret: string
+  readonly mcpApiKey: string
   readonly localPort: number
 }
 
@@ -84,12 +85,14 @@ export const buildMcpServerUrl = (controlPlaneUrl: string): string => {
   return url.toString()
 }
 
-export const buildCodexMcpCommandArgs = (mcpServerUrl: string): ReadonlyArray<string> => [
+export const buildCodexMcpCommandArgs = (mcpServerUrl: string, mcpApiKey: string): ReadonlyArray<string> => [
   "mcp",
   "add",
   "spawndock",
   "--env",
   `MCP_SERVER_URL=${mcpServerUrl}`,
+  "--env",
+  `MCP_SERVER_API_KEY=${mcpApiKey}`,
   "--",
   "npx",
   "-y",
@@ -130,6 +133,7 @@ export const buildGeneratedFiles = (
     localPort: claim.localPort,
     deviceSecret: claim.deviceSecret,
     mcpServerUrl,
+    mcpApiKey: claim.mcpApiKey,
   }
 
   const env = {
