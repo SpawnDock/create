@@ -1,6 +1,7 @@
 export const DEFAULT_PROJECT_DIR = ""
 export const DEFAULT_CONTROL_PLANE_URL = "http://49.13.117.55:3000"
 export const DEFAULT_CLAIM_PATH = "/v1/bootstrap/claim"
+export const DEFAULT_INSPECT_PATH = "/api/pairing/inspect"
 export const DEFAULT_TEMPLATE_REPO = "https://github.com/SpawnDock/tma-project.git"
 export const DEFAULT_TEMPLATE_BRANCH = "master"
 export const TEMPLATE_ID = "nextjs-template"
@@ -30,6 +31,11 @@ export interface BootstrapClaim {
   readonly deviceSecret: string
   readonly mcpApiKey: string
   readonly localPort: number
+}
+
+export interface PairingTokenInspection {
+  readonly projectId: string
+  readonly projectSlug: string
 }
 
 export interface BootstrapSummary {

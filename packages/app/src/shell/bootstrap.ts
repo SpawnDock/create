@@ -7,11 +7,13 @@ import {
   buildCodexMcpCommandArgs,
   buildGeneratedFiles,
   buildMcpServerUrl,
+  DEFAULT_INSPECT_PATH,
   DEFAULT_MCP_AGENTS,
   resolveClaimPath,
   type BootstrapClaim,
   type BootstrapSummary,
   type CliOptions,
+  type PairingTokenInspection,
   patchPackageJsonContent,
   resolveProjectContext,
 } from "../core/bootstrap.js"
@@ -19,6 +21,11 @@ import {
 const TEMPLATE_OVERLAY_DIR = resolve(
   fileURLToPath(new URL("../../../template-nextjs-overlay", import.meta.url)),
 )
+
+interface BootstrapPreflightTarget {
+  readonly projectDir: string
+  readonly claimProjectId: string | undefined
+}
 
 export const bootstrapProject = (
   options: CliOptions,
@@ -28,47 +35,57 @@ export const bootstrapProject = (
       yield* Effect.fail(new Error("Missing pairing token."))
     }
 
-    const explicitProjectDir = options.projectDir.length > 0
-      ? resolve(process.cwd(), options.projectDir)
-      : null
+    const preflight = yield* resolveBootstrapTarget(options)
+    const context = resolveProjectContext(preflight.projectDir)
 
-    if (explicitProjectDir !== null) {
-      yield* ensureEmptyProjectDir(explicitProjectDir)
-      yield* ensureParentDirectory(explicitProjectDir)
-    }
+    yield* ensureParentDirectory(preflight.projectDir)
 
     const claim = yield* claimProject(
       options.controlPlaneUrl,
       options.claimPath,
-      options.projectId,
+      preflight.claimProjectId ?? options.projectId,
       {
         token: options.token,
         ["localPort"]: 3000,
       },
     )
 
-    const projectDir = resolve(
-      process.cwd(),
-      options.projectDir.length > 0 ? options.projectDir : claim.projectSlug,
-    )
-    const context = resolveProjectContext(projectDir)
+    yield* cloneTemplateRepo(preflight.projectDir, options.templateRepo, options.templateBranch)
+    yield* applyTemplateOverlay(preflight.projectDir)
 
-    if (explicitProjectDir === null) {
-      yield* ensureEmptyProjectDir(projectDir)
-      yield* ensureParentDirectory(projectDir)
-    }
-    yield* cloneTemplateRepo(projectDir, options.templateRepo, options.templateBranch)
-    yield* applyTemplateOverlay(projectDir)
-
-    yield* writeGeneratedFilesToProject(projectDir, context, claim)
-    yield* installDependencies(projectDir)
-    const mcpAgents = yield* registerAgentIntegrations(projectDir, claim)
+    yield* writeGeneratedFilesToProject(preflight.projectDir, context, claim)
+    yield* installDependencies(preflight.projectDir)
+    const mcpAgents = yield* registerAgentIntegrations(preflight.projectDir, claim)
 
     return {
-      projectDir,
+      projectDir: preflight.projectDir,
       projectName: context.projectName,
       previewOrigin: claim.previewOrigin,
       mcpAgents,
+    }
+  })
+
+const resolveBootstrapTarget = (
+  options: CliOptions,
+): Effect.Effect<BootstrapPreflightTarget, Error> =>
+  Effect.gen(function* () {
+    if (options.projectDir.length > 0) {
+      const projectDir = resolve(process.cwd(), options.projectDir)
+      yield* ensureEmptyProjectDir(projectDir)
+
+      return {
+        projectDir,
+        claimProjectId: options.projectId,
+      }
+    }
+
+    const inspection = yield* inspectProject(options.controlPlaneUrl, options.token)
+    const projectDir = resolve(process.cwd(), inspection.projectSlug)
+    yield* ensureEmptyProjectDir(projectDir)
+
+    return {
+      projectDir,
+      claimProjectId: inspection.projectId,
     }
   })
 
@@ -175,6 +192,39 @@ const claimProject = (
 
       if (parsed === null) {
         throw new Error("SpawnDock control plane response is missing required bootstrap fields")
+      }
+
+      return parsed
+    },
+    catch: toError,
+  })
+
+const inspectProject = (
+  controlPlaneUrl: string,
+  token: string,
+): Effect.Effect<PairingTokenInspection, Error> =>
+  Effect.tryPromise({
+    try: async () => {
+      const normalizedControlPlaneUrl = controlPlaneUrl.replace(/\/$/, "")
+      const response = await fetch(`${normalizedControlPlaneUrl}${DEFAULT_INSPECT_PATH}`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      })
+
+      if (!response.ok) {
+        const body = await response.json().catch(async () => ({ error: await response.text().catch(() => "") }))
+        const errorCode = isRecord(body) ? readString(body, "error") : null
+        throw new Error(formatInspectError(response.status, errorCode))
+      }
+
+      const json = (await response.json()) as unknown
+      const parsed = parseInspectResponse(json)
+
+      if (parsed === null) {
+        throw new Error("SpawnDock control plane inspect response is missing required project fields")
       }
 
       return parsed
@@ -352,6 +402,28 @@ const parseClaimResponse = (
   }
 }
 
+const parseInspectResponse = (
+  input: unknown,
+): PairingTokenInspection | null => {
+  if (!isRecord(input)) {
+    return null
+  }
+
+  const projectValue = input["project"]
+  const project = isRecord(projectValue) ? projectValue : {}
+  const projectId = readString(input, "projectId") ?? readString(project, "id")
+  const projectSlug = readString(input, "projectSlug") ?? readString(project, "slug")
+
+  if (projectId === null || projectSlug === null) {
+    return null
+  }
+
+  return {
+    projectId,
+    projectSlug,
+  }
+}
+
 const readNumber = (input: Record<string, unknown>, key: string): number | null => {
   const value = input[key]
   return typeof value === "number" ? value : null
@@ -386,6 +458,20 @@ const formatClaimError = (status: number, errorCode: string | null): string => {
 
   return `SpawnDock control plane claim failed: ${status}`
 }
+
+const formatInspectError = (status: number, errorCode: string | null): string => {
+  if ((status === 404 || status === 405) && !isKnownClaimErrorCode(errorCode)) {
+    return "SpawnDock control plane cannot inspect pairing tokens yet. Rerun bootstrap with an explicit target directory or upgrade the control plane."
+  }
+
+  return formatClaimError(status, errorCode)
+}
+
+const isKnownClaimErrorCode = (errorCode: string | null): boolean =>
+  errorCode === "TokenExpired" ||
+  errorCode === "TokenAlreadyClaimed" ||
+  errorCode === "TokenNotFound" ||
+  errorCode === "project_not_found"
 
 const copyOverlayTreeSync = (sourceDir: string, targetDir: string): void => {
   const entries = readdirSync(sourceDir, { withFileTypes: true })
