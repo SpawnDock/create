@@ -118,4 +118,49 @@ describe("bootstrapProject preflight", () => {
     expect(String(exit.cause).includes("cannot inspect pairing tokens yet")).toBe(true)
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
+
+  it("falls back to claim replay when the token was already claimed", async () => {
+    const projectDir = join(tempRoot, "spawndock-app-4")
+    mkdirSync(projectDir, { recursive: true })
+    writeFileSync(join(projectDir, "keep.txt"), "occupied", "utf8")
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 409,
+      json: async () => ({ error: "TokenAlreadyClaimed" }),
+      text: async () => "",
+    })
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        projectId: "project_123",
+        projectSlug: "spawndock-app-4",
+        controlPlaneUrl: "https://api.example.com",
+        launchUrl: "https://api.example.com/preview/spawndock-app-4",
+        deviceSecret: "secret_123",
+        mcpApiKey: "mcp_123",
+        localPort: 3001,
+      }),
+    })
+
+    const exit = await Effect.runPromiseExit(
+      bootstrapProject({
+        token: "pair_demo",
+        projectDir: "",
+        controlPlaneUrl: "https://api.example.com",
+        claimPath: "/v1/bootstrap/claim",
+        templateRepo: "https://github.com/SpawnDock/tma-project.git",
+        templateBranch: "master",
+      }),
+    )
+
+    expect(exit._tag).toBe("Failure")
+    if (exit._tag !== "Failure") {
+      throw new Error("Expected bootstrap to fail on the occupied derived directory after claim replay")
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe("https://api.example.com/api/pairing/inspect")
+    expect(String(fetchMock.mock.calls[1]?.[0])).toBe("https://api.example.com/v1/bootstrap/claim")
+    expect(String(exit.cause).includes("Target directory is not empty")).toBe(true)
+  })
 })

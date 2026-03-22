@@ -36,9 +36,6 @@ export const bootstrapProject = (
     }
 
     const preflight = yield* resolveBootstrapTarget(options)
-    const context = resolveProjectContext(preflight.projectDir)
-
-    yield* ensureParentDirectory(preflight.projectDir)
 
     const claim = yield* claimProject(
       options.controlPlaneUrl,
@@ -50,15 +47,27 @@ export const bootstrapProject = (
       },
     )
 
-    yield* cloneTemplateRepo(preflight.projectDir, options.templateRepo, options.templateBranch)
-    yield* applyTemplateOverlay(preflight.projectDir)
+    const projectDir = preflight.projectDir.length > 0
+      ? preflight.projectDir
+      : resolve(process.cwd(), claim.projectSlug)
+    const context = resolveProjectContext(projectDir)
 
-    yield* writeGeneratedFilesToProject(preflight.projectDir, context, claim)
-    yield* installDependencies(preflight.projectDir)
-    const mcpAgents = yield* registerAgentIntegrations(preflight.projectDir, claim)
+    if (preflight.projectDir.length === 0) {
+      yield* ensureEmptyProjectDir(projectDir)
+      yield* ensureParentDirectory(projectDir)
+    } else {
+      yield* ensureParentDirectory(projectDir)
+    }
+
+    yield* cloneTemplateRepo(projectDir, options.templateRepo, options.templateBranch)
+    yield* applyTemplateOverlay(projectDir)
+
+    yield* writeGeneratedFilesToProject(projectDir, context, claim)
+    yield* installDependencies(projectDir)
+    const mcpAgents = yield* registerAgentIntegrations(projectDir, claim)
 
     return {
-      projectDir: preflight.projectDir,
+      projectDir,
       projectName: context.projectName,
       previewOrigin: claim.previewOrigin,
       mcpAgents,
@@ -80,6 +89,14 @@ const resolveBootstrapTarget = (
     }
 
     const inspection = yield* inspectProject(options.controlPlaneUrl, options.token)
+
+    if (inspection === null) {
+      return {
+        projectDir: "",
+        claimProjectId: options.projectId,
+      }
+    }
+
     const projectDir = resolve(process.cwd(), inspection.projectSlug)
     yield* ensureEmptyProjectDir(projectDir)
 
@@ -202,7 +219,7 @@ const claimProject = (
 const inspectProject = (
   controlPlaneUrl: string,
   token: string,
-): Effect.Effect<PairingTokenInspection, Error> =>
+): Effect.Effect<PairingTokenInspection | null, Error> =>
   Effect.tryPromise({
     try: async () => {
       const normalizedControlPlaneUrl = controlPlaneUrl.replace(/\/$/, "")
@@ -217,6 +234,11 @@ const inspectProject = (
       if (!response.ok) {
         const body = await response.json().catch(async () => ({ error: await response.text().catch(() => "") }))
         const errorCode = isRecord(body) ? readString(body, "error") : null
+
+        if (response.status === 409 && errorCode === "TokenAlreadyClaimed") {
+          return null
+        }
+
         throw new Error(formatInspectError(response.status, errorCode))
       }
 
