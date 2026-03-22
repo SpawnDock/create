@@ -9,6 +9,12 @@ describe("parseArgs", () => {
     expect(result.projectDir).toBe("my-project")
   })
 
+  it("leaves project directory empty when omitted so bootstrap can derive it from the token claim", () => {
+    const result = parseArgs(["--token", "abc"])
+
+    expect(result.projectDir).toBe("")
+  })
+
   it("reads custom claim path", () => {
     const result = parseArgs(["--token=abc", "--claim-path", "/claim", "my-project"])
 

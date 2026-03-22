@@ -28,26 +28,26 @@ export const bootstrapProject = (
       yield* Effect.fail(new Error("Missing pairing token."))
     }
 
-    const projectDir = resolve(process.cwd(), options.projectDir)
-    const context = resolveProjectContext(projectDir)
-
-    yield* ensureEmptyProjectDir(projectDir)
-    yield* ensureParentDirectory(projectDir)
-    yield* cloneTemplateRepo(projectDir, options.templateRepo, options.templateBranch)
-    yield* applyTemplateOverlay(projectDir)
-
     const claim = yield* claimProject(
       options.controlPlaneUrl,
       options.claimPath,
       options.projectId,
       {
         token: options.token,
-        ["projectSlug"]: context.projectSlug,
-        projectName: context.projectName,
-        templateId: context.templateId,
         ["localPort"]: 3000,
       },
     )
+
+    const projectDir = resolve(
+      process.cwd(),
+      options.projectDir.length > 0 ? options.projectDir : claim.projectSlug,
+    )
+    const context = resolveProjectContext(projectDir)
+
+    yield* ensureEmptyProjectDir(projectDir)
+    yield* ensureParentDirectory(projectDir)
+    yield* cloneTemplateRepo(projectDir, options.templateRepo, options.templateBranch)
+    yield* applyTemplateOverlay(projectDir)
 
     yield* writeGeneratedFilesToProject(projectDir, context, claim)
     yield* installDependencies(projectDir)

@@ -1,4 +1,4 @@
-export const DEFAULT_PROJECT_DIR = "spawndock-tma"
+export const DEFAULT_PROJECT_DIR = ""
 export const DEFAULT_CONTROL_PLANE_URL = "https://api.spawndock.app"
 export const DEFAULT_CLAIM_PATH = "/v1/bootstrap/claim"
 export const DEFAULT_TEMPLATE_REPO = "https://github.com/SpawnDock/tma-project.git"
