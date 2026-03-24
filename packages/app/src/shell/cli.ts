@@ -9,7 +9,7 @@ import {
 } from "../core/bootstrap.js"
 
 export const formatUsage = (
-  invocation = "npx @spawn-dock/create --token <pairing-token> [project-dir]",
+  invocation = "npx -y @spawn-dock/create@beta --token <pairing-token> [project-dir]",
 ): string => `Usage: ${invocation}`
 
 export const parseArgs = (

@@ -15,7 +15,7 @@ and then writes project-specific runtime files.
 ## Usage
 
 ```bash
-npx @spawn-dock/create --token <pairing-token> [project-dir]
+npx -y @spawn-dock/create@beta --token <pairing-token> [project-dir]
 ```
 
 If npm registry access is unavailable, the GitHub fallback remains:

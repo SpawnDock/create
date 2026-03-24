@@ -61,8 +61,8 @@ describe("parseArgs", () => {
 
 describe("formatUsage", () => {
   it("renders a custom invocation", () => {
-    expect(formatUsage("npx @spawn-dock/create --token <pairing-token> [project-dir]")).toBe(
-      "Usage: npx @spawn-dock/create --token <pairing-token> [project-dir]",
+    expect(formatUsage("npx -y @spawn-dock/create@beta --token <pairing-token> [project-dir]")).toBe(
+      "Usage: npx -y @spawn-dock/create@beta --token <pairing-token> [project-dir]",
     )
   })
 })
