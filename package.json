@@ -1,6 +1,6 @@
 {
   "name": "@spawn-dock/create",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "type": "module",
   "description": "SpawnDock bootstrap CLI for local TMA projects",
   "license": "ISC",
