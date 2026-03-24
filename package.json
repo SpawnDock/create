@@ -1,6 +1,6 @@
 {
   "name": "@spawn-dock/create",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.4",
   "type": "module",
   "description": "SpawnDock bootstrap CLI for local TMA projects",
   "license": "ISC",
@@ -22,11 +22,12 @@
   },
   "files": [
     "README.md",
+    "bin",
     "packages/app/dist",
     "packages/app/template-nextjs-overlay"
   ],
   "bin": {
-    "create": "./packages/app/dist/src/app/main.js"
+    "spawndock-create": "bin/spawndock-create.mjs"
   },
   "scripts": {
     "prepare": "node ./scripts/prepare.mjs",
