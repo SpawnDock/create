@@ -61,6 +61,7 @@ The package also ships a built-in TMA overlay and applies it after cloning
 - `AGENTS.md` is shipped by the template for repo-level AI agent instructions.
 - `CLAUDE.md` is shipped by the template for Claude Code project memory.
 - `.agents/skills/tma-knowledge-search` is shipped by the template as the local TMA knowledge-search skill for compatible agents.
+- The bundled TMA knowledge-search skill is Node-based and runs via `node .agents/skills/tma-knowledge-search/scripts/search_tma_knowledge.mjs "<query>"`.
 - if `codex` is installed locally, bootstrap also registers the same MCP server in
   the global Codex MCP config automatically.
 - bootstrap also mirrors `tma-knowledge-search` into `~/.codex/skills` so Codex can discover the same skill natively.
