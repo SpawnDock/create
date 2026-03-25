@@ -3,6 +3,9 @@ import { type BootstrapSummary, validateNodeMajorVersion } from "../core/bootstr
 import { bootstrapProject } from "../shell/bootstrap.js"
 import { formatUsage, readCliOptions } from "../shell/cli.js"
 
+const formatProjectDirectoryHint = (projectDir: string): string =>
+  projectDir.split(/[\\/]/g).filter(Boolean).at(-1) ?? projectDir
+
 export const formatSuccess = (summary: BootstrapSummary): string =>
   [
     "",
@@ -12,8 +15,8 @@ export const formatSuccess = (summary: BootstrapSummary): string =>
     `MCP ready for: ${summary.mcpAgents.join(", ")}`,
     "Dependencies already installed with pnpm.",
     "Next:",
-    `  cd "${summary.projectDir}"`,
-    "  pnpm run agent",
+    `  cd ${formatProjectDirectoryHint(summary.projectDir)}`,
+    "  pnpm run dev",
   ].join("\n")
 
 const cliProgram = pipe(
