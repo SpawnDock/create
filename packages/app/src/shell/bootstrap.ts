@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
 import {
   spawnSync,
+  type SpawnSyncOptionsWithStringEncoding,
   type SpawnSyncReturns,
 } from "node:child_process"
 import { fileURLToPath } from "node:url"
@@ -353,12 +354,7 @@ const runCommand = (
 ): Effect.Effect<SpawnSyncReturns<string>, Error> =>
   Effect.try({
     try: () => {
-      const resolvedCommand = resolveCommandExecutable(command)
-      const result = spawnSync(resolvedCommand, [...args], {
-        cwd,
-        encoding: "utf8",
-        stdio: "pipe",
-      })
+      const result = spawnSync(command, [...args], createSpawnOptions(cwd, "pipe"))
 
       if (failOnNonZero && (result.status !== 0 || result.error)) {
         throw new Error(formatCommandFailure(result, command, args))
@@ -372,21 +368,8 @@ const runCommand = (
 const commandExists = (command: string): Effect.Effect<boolean, Error> =>
   Effect.try({
     try: () => {
-      const result = spawnSync(resolveCommandExecutable(command), ["--help"], {
-        cwd: process.cwd(),
-        encoding: "utf8",
-        stdio: "ignore",
-      })
-
-      if (result.error) {
-        if (isNodeError(result.error) && result.error.code === "ENOENT") {
-          return false
-        }
-
-        throw toError(result.error)
-      }
-
-      return true
+      const result = spawnSync(command, ["--version"], createSpawnOptions(process.cwd(), "ignore"))
+      return result.status === 0
     },
     catch: toError,
   })
@@ -545,18 +528,21 @@ function resolveTemplateOverlayDir(): string {
   return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0]
 }
 
-const WINDOWS_CMD_SHIMS = new Set(["codex", "corepack", "npm", "npx", "pnpm"])
-
 export const resolveCommandExecutable = (
   command: string,
   platform = process.platform,
-): string => {
-  if (platform !== "win32") {
-    return command
-  }
+): string => platform === "win32" ? command : command
 
-  return WINDOWS_CMD_SHIMS.has(command.toLowerCase()) ? `${command}.cmd` : command
-}
+export const createSpawnOptions = (
+  cwd: string,
+  stdio: SpawnSyncOptionsWithStringEncoding["stdio"],
+  platform = process.platform,
+): SpawnSyncOptionsWithStringEncoding => ({
+  cwd,
+  encoding: "utf8",
+  stdio,
+  ...(platform === "win32" ? { shell: true, windowsHide: true } : {}),
+})
 
 export const formatCommandFailure = (
   result: SpawnSyncReturns<string>,

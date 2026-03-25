@@ -1,15 +1,16 @@
-const WINDOWS_COMMAND_OVERRIDES = {
-  gh: "gh.exe",
-  git: "git.exe",
-  pnpm: "pnpm.cmd",
+export function resolveCommand(command, platform = process.platform) {
+  return platform === "win32" ? command : command
 }
 
-export function resolveCommand(command, platform = process.platform) {
+export function resolveSpawnOptions(command, platform = process.platform) {
   if (platform !== "win32") {
-    return command
+    return {}
   }
 
-  return WINDOWS_COMMAND_OVERRIDES[command] ?? command
+  return {
+    shell: true,
+    windowsHide: true,
+  }
 }
 
 export function trimOutput(value) {

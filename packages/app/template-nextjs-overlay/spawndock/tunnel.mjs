@@ -1,10 +1,12 @@
 import { spawn } from "node:child_process"
-import { resolveCommand } from "./command.mjs"
+import { resolveCommand, resolveSpawnOptions } from "./command.mjs"
 
-const child = spawn(resolveCommand("pnpm"), ["exec", "spawn-dock-tunnel"], {
+const pnpmCommand = resolveCommand("pnpm")
+const child = spawn(pnpmCommand, ["exec", "spawn-dock-tunnel"], {
   cwd: process.cwd(),
   env: process.env,
   stdio: "inherit",
+  ...resolveSpawnOptions(pnpmCommand),
 })
 
 child.on("exit", (code) => {

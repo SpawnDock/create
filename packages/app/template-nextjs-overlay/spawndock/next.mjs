@@ -6,7 +6,7 @@ import {
   resolveAllowedDevOrigins,
   resolveConfiguredLocalPort,
 } from "./config.mjs"
-import { resolveCommand } from "./command.mjs"
+import { resolveCommand, resolveSpawnOptions } from "./command.mjs"
 import { findAvailablePort } from "./port.mjs"
 
 const config = readSpawndockConfig()
@@ -23,7 +23,8 @@ if (localPort !== requestedLocalPort) {
   )
 }
 
-const child = spawn(resolveCommand("pnpm"), ["exec", "next", "dev", "-p", String(localPort)], {
+const pnpmCommand = resolveCommand("pnpm")
+const child = spawn(pnpmCommand, ["exec", "next", "dev", "-p", String(localPort)], {
   cwd: process.cwd(),
   env: {
     ...process.env,
@@ -33,6 +34,7 @@ const child = spawn(resolveCommand("pnpm"), ["exec", "next", "dev", "-p", String
     SPAWNDOCK_SERVER_ACTIONS_ALLOWED_ORIGINS: config.previewHost ?? "",
   },
   stdio: ["inherit", "pipe", "pipe"],
+  ...resolveSpawnOptions(pnpmCommand),
 })
 
 const exitWithChild = (code) => {

@@ -2,7 +2,7 @@ import { execFileSync, spawnSync } from "node:child_process"
 import { cpSync, existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
-import { resolveCommand, trimOutput } from "./command.mjs"
+import { resolveCommand, resolveSpawnOptions, trimOutput } from "./command.mjs"
 import { readSpawndockConfig } from "./config.mjs"
 
 const cwd = process.cwd()
@@ -65,7 +65,12 @@ function deployToGhPagesBranch(remoteUrl) {
     run("git", ["-C", tempDir, "commit", "-m", "Deploy SpawnDock app to GitHub Pages"], undefined, true)
     run("git", ["-C", tempDir, "push", remoteUrl, "gh-pages", "--force"])
   } finally {
-    spawnSync(resolveCommand("git"), ["worktree", "remove", tempDir, "--force"], { cwd, stdio: "ignore" })
+    const gitCommand = resolveCommand("git")
+    spawnSync(gitCommand, ["worktree", "remove", tempDir, "--force"], {
+      cwd,
+      stdio: "ignore",
+      ...resolveSpawnOptions(gitCommand),
+    })
     rmSync(tempDir, { recursive: true, force: true })
   }
 }
@@ -99,20 +104,24 @@ function enablePages(repoFullName) {
 }
 
 function remoteBranchExists(branch) {
-  const result = spawnSync(resolveCommand("git"), ["ls-remote", "--heads", "origin", branch], {
+  const gitCommand = resolveCommand("git")
+  const result = spawnSync(gitCommand, ["ls-remote", "--heads", "origin", branch], {
     cwd,
     encoding: "utf8",
     stdio: "pipe",
+    ...resolveSpawnOptions(gitCommand),
   })
 
   return result.status === 0 && trimOutput(result.stdout).length > 0
 }
 
 function getOriginUrl() {
-  const result = spawnSync(resolveCommand("git"), ["remote", "get-url", "origin"], {
+  const gitCommand = resolveCommand("git")
+  const result = spawnSync(gitCommand, ["remote", "get-url", "origin"], {
     cwd,
     encoding: "utf8",
     stdio: "pipe",
+    ...resolveSpawnOptions(gitCommand),
   })
 
   return result.status === 0 ? trimOutput(result.stdout) : null
@@ -126,10 +135,12 @@ function clearDirectory(dir) {
 }
 
 function readGh(...args) {
-  const result = spawnSync(resolveCommand("gh"), args, {
+  const ghCommand = resolveCommand("gh")
+  const result = spawnSync(ghCommand, args, {
     cwd,
     encoding: "utf8",
     stdio: "pipe",
+    ...resolveSpawnOptions(ghCommand),
   })
 
   if (result.status !== 0) {
@@ -146,11 +157,13 @@ function run(command, args, env = process.env, allowEmptyCommit = false) {
     ? [...args, "--allow-empty"]
     : args
 
-  const result = spawnSync(resolveCommand(command), finalArgs, {
+  const resolvedCommand = resolveCommand(command)
+  const result = spawnSync(resolvedCommand, finalArgs, {
     cwd,
     env,
     encoding: "utf8",
     stdio: "inherit",
+    ...resolveSpawnOptions(resolvedCommand),
   })
 
   if (result.status !== 0) {
