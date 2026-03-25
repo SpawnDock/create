@@ -330,18 +330,15 @@ const runCommand = (
 ): Effect.Effect<SpawnSyncReturns<string>, Error> =>
   Effect.try({
     try: () => {
-      const result = spawnSync(command, [...args], {
+      const resolvedCommand = resolveCommandExecutable(command)
+      const result = spawnSync(resolvedCommand, [...args], {
         cwd,
         encoding: "utf8",
         stdio: "pipe",
       })
 
-      if (failOnNonZero && result.status !== 0) {
-        throw new Error(
-          result.stderr.trim() ||
-            result.stdout.trim() ||
-            `Command failed: ${command} ${args.join(" ")}`,
-        )
+      if (failOnNonZero && (result.status !== 0 || result.error)) {
+        throw new Error(formatCommandFailure(result, command, args))
       }
 
       return result
@@ -352,7 +349,7 @@ const runCommand = (
 const commandExists = (command: string): Effect.Effect<boolean, Error> =>
   Effect.try({
     try: () => {
-      const result = spawnSync(command, ["--help"], {
+      const result = spawnSync(resolveCommandExecutable(command), ["--help"], {
         cwd: process.cwd(),
         encoding: "utf8",
         stdio: "ignore",
@@ -471,6 +468,21 @@ const isNodeError = (error: unknown): error is NodeJS.ErrnoException =>
 const toError = (cause: unknown): Error =>
   cause instanceof Error ? cause : new Error(String(cause))
 
+const trimSpawnOutput = (value: string | Buffer | null | undefined): string => {
+  if (typeof value === "string") {
+    return value.trim()
+  }
+
+  if (Buffer.isBuffer(value)) {
+    return value.toString("utf8").trim()
+  }
+
+  return ""
+}
+
+const trimSpawnError = (error: Error | undefined): string =>
+  typeof error?.message === "string" ? error.message.trim() : ""
+
 const formatClaimError = (status: number, errorCode: string | null): string => {
   if (status === 410 || errorCode === "TokenExpired") {
     return "Pairing token expired. Create a new project in the SpawnDock bot and rerun bootstrap."
@@ -500,6 +512,29 @@ const isKnownClaimErrorCode = (errorCode: string | null): boolean =>
   errorCode === "TokenAlreadyClaimed" ||
   errorCode === "TokenNotFound" ||
   errorCode === "project_not_found"
+
+const WINDOWS_CMD_SHIMS = new Set(["codex", "corepack", "npm", "npx", "pnpm"])
+
+export const resolveCommandExecutable = (
+  command: string,
+  platform = process.platform,
+): string => {
+  if (platform !== "win32") {
+    return command
+  }
+
+  return WINDOWS_CMD_SHIMS.has(command.toLowerCase()) ? `${command}.cmd` : command
+}
+
+export const formatCommandFailure = (
+  result: SpawnSyncReturns<string>,
+  command: string,
+  args: ReadonlyArray<string>,
+): string =>
+  trimSpawnOutput(result.stderr) ||
+  trimSpawnOutput(result.stdout) ||
+  trimSpawnError(result.error) ||
+  `Command failed: ${command} ${args.join(" ")}`
 
 const copyOverlayTreeSync = (sourceDir: string, targetDir: string): void => {
   const entries = readdirSync(sourceDir, { withFileTypes: true })
