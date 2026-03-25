@@ -1,0 +1,7 @@
+interface:
+  display_name: "TMA Knowledge Search"
+  short_description: "Search TMA implementation knowledge"
+  default_prompt: "Use $tma-knowledge-search to look up Telegram Mini App and SpawnDock TMA implementation details before answering."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 import {
   buildCodexMcpCommandArgs,
@@ -100,6 +102,7 @@ describe("buildGeneratedFiles", () => {
         telegramMiniAppUrl: "https://t.me/TMASpawnerBot/tma?startapp=demo-project",
         deviceSecret: "secret_123",
         mcpApiKey: "mcp_key_123",
+        apiToken: "api_key_123",
         localPort: 3000,
       },
     )
@@ -110,11 +113,25 @@ describe("buildGeneratedFiles", () => {
     expect(fileMap.has(".mcp.json")).toBe(true)
     expect(fileMap.get("spawndock.config.json")).toContain("\"mcpServerUrl\": \"https://api.example.com/mcp/sse\"")
     expect(fileMap.get("spawndock.config.json")).toContain("\"mcpApiKey\": \"mcp_key_123\"")
+    expect(fileMap.get("spawndock.config.json")).toContain("\"apiToken\": \"api_key_123\"")
     expect(fileMap.get("spawndock.config.json")).toContain("\"telegramMiniAppUrl\": \"https://t.me/TMASpawnerBot/tma?startapp=demo-project\"")
+    expect(fileMap.get(".env.local")).toContain("SPAWNDOCK_API_TOKEN=api_key_123")
     expect(fileMap.get("opencode.json")).toContain("./spawndock/mcp.mjs")
     expect(fileMap.get(".mcp.json")).toContain("./spawndock/mcp.mjs")
     expect(fileMap.get("public/tonconnect-manifest.json")).toContain("\"url\": \"https://api.example.com/preview/demo-project\"")
     expect(fileMap.get("spawndock.dev-tunnel.json")).toContain("\"projectSlug\": \"demo-project\"")
+  })
+})
+
+describe("template overlay", () => {
+  it("ships Claude memory and the local TMA knowledge skill", () => {
+    const claudePath = fileURLToPath(new URL("../template-nextjs-overlay/CLAUDE.md", import.meta.url))
+    const skillPath = fileURLToPath(
+      new URL("../template-nextjs-overlay/.agents/skills/tma-knowledge-search/SKILL.md", import.meta.url),
+    )
+
+    expect(existsSync(claudePath)).toBe(true)
+    expect(existsSync(skillPath)).toBe(true)
   })
 })
 

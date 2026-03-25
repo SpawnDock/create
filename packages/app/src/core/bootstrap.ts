@@ -41,6 +41,7 @@ export interface BootstrapClaim {
   readonly telegramMiniAppUrl?: string
   readonly deviceSecret: string
   readonly mcpApiKey: string
+  readonly apiToken?: string
   readonly localPort: number
 }
 
@@ -210,6 +211,7 @@ export const buildGeneratedFiles = (
     deviceSecret: claim.deviceSecret,
     mcpServerUrl,
     mcpApiKey: claim.mcpApiKey,
+    ...(claim.apiToken ? { apiToken: claim.apiToken } : {}),
   }
 
   const env = {
@@ -223,6 +225,7 @@ export const buildGeneratedFiles = (
     SPAWNDOCK_PROJECT_ID: claim.projectId,
     SPAWNDOCK_PROJECT_SLUG: claim.projectSlug,
     SPAWNDOCK_ALLOWED_DEV_ORIGINS: claim.previewOrigin,
+    ...(claim.apiToken ? { SPAWNDOCK_API_TOKEN: claim.apiToken } : {}),
   }
 
   return [

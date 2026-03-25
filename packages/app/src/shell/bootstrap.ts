@@ -1,9 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import {
   spawnSync,
   type SpawnSyncOptionsWithStringEncoding,
   type SpawnSyncReturns,
 } from "node:child_process"
+import { homedir } from "node:os"
 import { fileURLToPath } from "node:url"
 import { dirname, join, resolve } from "node:path"
 import { Console, Effect } from "effect"
@@ -24,6 +25,7 @@ import {
 } from "../core/bootstrap.js"
 
 const TEMPLATE_OVERLAY_DIR = resolveTemplateOverlayDir()
+const TMA_KNOWLEDGE_SKILL_NAME = "tma-knowledge-search"
 
 interface BootstrapPreflightTarget {
   readonly projectDir: string
@@ -314,6 +316,7 @@ const registerAgentIntegrations = (
 ): Effect.Effect<ReadonlyArray<string>, Error> =>
   Effect.gen(function* () {
     const integrations: string[] = [...DEFAULT_MCP_AGENTS]
+    yield* installCodexSkill(projectDir)
     const mcpServerUrl = buildMcpServerUrl(claim.controlPlaneUrl)
     const codexRegistered = yield* registerCodexIntegration(projectDir, mcpServerUrl, claim.mcpApiKey)
 
@@ -323,6 +326,29 @@ const registerAgentIntegrations = (
 
     return integrations
   })
+
+const installCodexSkill = (projectDir: string): Effect.Effect<boolean, never> =>
+  Effect.try({
+    try: () => {
+      const sourceDir = join(projectDir, ".agents", "skills", TMA_KNOWLEDGE_SKILL_NAME)
+      if (!existsSync(sourceDir)) {
+        return false
+      }
+
+      const codexHome = process.env["CODEX_HOME"]
+      const codexRoot = codexHome?.length
+        ? codexHome
+        : join(homedir(), ".codex")
+      const targetDir = join(codexRoot, "skills", TMA_KNOWLEDGE_SKILL_NAME)
+
+      rmSync(targetDir, { recursive: true, force: true })
+      mkdirSync(dirname(targetDir), { recursive: true })
+      copyOverlayTreeSync(sourceDir, targetDir)
+
+      return true
+    },
+    catch: toError,
+  }).pipe(Effect.catchAll(() => Effect.succeed(false)))
 
 const registerCodexIntegration = (
   projectDir: string,
@@ -407,6 +433,9 @@ const parseClaimResponse = (
   const mcpApiKey =
     readString(input, "mcpApiKey") ??
     readString(input, "mcpToken")
+  const apiToken =
+    readString(input, "apiToken") ??
+    readString(input, "api_token")
   const localPort =
     readNumber(input, "localPort") ??
     (typeof fallbackLocalPort === "number" ? fallbackLocalPort : 3000)
@@ -429,6 +458,7 @@ const parseClaimResponse = (
     ...(telegramMiniAppUrl ? { telegramMiniAppUrl } : {}),
     deviceSecret,
     mcpApiKey,
+    ...(apiToken ? { apiToken } : {}),
     localPort,
   }
 }

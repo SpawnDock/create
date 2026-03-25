@@ -31,11 +31,18 @@ npx --yes github:SpawnDock/create#main --token <pairing-token> [project-dir]
 - `spawndock.dev-tunnel.json`
 - `public/tonconnect-manifest.json`
 
+`spawndock.config.json` may include `apiToken`, and `.env.local` may include
+`SPAWNDOCK_API_TOKEN`, so the bundled TMA knowledge-search skill can use the
+authenticated API tier immediately after bootstrap.
+
 ## Built-in Overlay
 
 The package also ships a built-in TMA overlay and applies it after cloning
 `SpawnDock/tma-project`. This overlay is responsible for:
 
+- `AGENTS.md`
+- `CLAUDE.md`
+- `.agents/skills/tma-knowledge-search`
 - `spawndock/dev.mjs`
 - `spawndock/next.mjs`
 - `spawndock/tunnel.mjs`
@@ -51,8 +58,12 @@ The package also ships a built-in TMA overlay and applies it after cloning
 
 - `opencode.json` is shipped by the template for OpenCode.
 - `.mcp.json` is shipped by the template for Claude Code.
+- `AGENTS.md` is shipped by the template for repo-level AI agent instructions.
+- `CLAUDE.md` is shipped by the template for Claude Code project memory.
+- `.agents/skills/tma-knowledge-search` is shipped by the template as the local TMA knowledge-search skill for compatible agents.
 - if `codex` is installed locally, bootstrap also registers the same MCP server in
   the global Codex MCP config automatically.
+- bootstrap also mirrors `tma-knowledge-search` into `~/.codex/skills` so Codex can discover the same skill natively.
 
 ## Development
 
