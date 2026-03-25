@@ -2,6 +2,7 @@ import { execFileSync, spawnSync } from "node:child_process"
 import { cpSync, existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
+import { resolveCommand, trimOutput } from "./command.mjs"
 import { readSpawndockConfig } from "./config.mjs"
 
 const cwd = process.cwd()
@@ -9,8 +10,8 @@ const config = readSpawndockConfig(cwd)
 
 runBuild()
 
-const owner = trim(readGh("api", "user", "--jq", ".login"))
-const repoName = trim(config.projectSlug)
+const owner = trimOutput(readGh("api", "user", "--jq", ".login"))
+const repoName = trimOutput(config.projectSlug)
 const repoFullName = `${owner}/${repoName}`
 const remoteUrl = ensureRepository(repoFullName)
 deployToGhPagesBranch(remoteUrl)
@@ -64,7 +65,7 @@ function deployToGhPagesBranch(remoteUrl) {
     run("git", ["-C", tempDir, "commit", "-m", "Deploy SpawnDock app to GitHub Pages"], undefined, true)
     run("git", ["-C", tempDir, "push", remoteUrl, "gh-pages", "--force"])
   } finally {
-    spawnSync("git", ["worktree", "remove", tempDir, "--force"], { cwd, stdio: "ignore" })
+    spawnSync(resolveCommand("git"), ["worktree", "remove", tempDir, "--force"], { cwd, stdio: "ignore" })
     rmSync(tempDir, { recursive: true, force: true })
   }
 }
@@ -98,23 +99,23 @@ function enablePages(repoFullName) {
 }
 
 function remoteBranchExists(branch) {
-  const result = spawnSync("git", ["ls-remote", "--heads", "origin", branch], {
+  const result = spawnSync(resolveCommand("git"), ["ls-remote", "--heads", "origin", branch], {
     cwd,
     encoding: "utf8",
     stdio: "pipe",
   })
 
-  return result.status === 0 && result.stdout.trim().length > 0
+  return result.status === 0 && trimOutput(result.stdout).length > 0
 }
 
 function getOriginUrl() {
-  const result = spawnSync("git", ["remote", "get-url", "origin"], {
+  const result = spawnSync(resolveCommand("git"), ["remote", "get-url", "origin"], {
     cwd,
     encoding: "utf8",
     stdio: "pipe",
   })
 
-  return result.status === 0 ? trim(result.stdout) : null
+  return result.status === 0 ? trimOutput(result.stdout) : null
 }
 
 function clearDirectory(dir) {
@@ -125,14 +126,16 @@ function clearDirectory(dir) {
 }
 
 function readGh(...args) {
-  const result = spawnSync("gh", args, {
+  const result = spawnSync(resolveCommand("gh"), args, {
     cwd,
     encoding: "utf8",
     stdio: "pipe",
   })
 
   if (result.status !== 0) {
-    throw new Error(trim(result.stderr) || trim(result.stdout) || `gh ${args.join(" ")} failed`)
+    throw new Error(
+      trimOutput(result.stderr) || trimOutput(result.stdout) || `gh ${args.join(" ")} failed`,
+    )
   }
 
   return result.stdout
@@ -143,7 +146,7 @@ function run(command, args, env = process.env, allowEmptyCommit = false) {
     ? [...args, "--allow-empty"]
     : args
 
-  const result = spawnSync(command, finalArgs, {
+  const result = spawnSync(resolveCommand(command), finalArgs, {
     cwd,
     env,
     encoding: "utf8",
@@ -153,8 +156,4 @@ function run(command, args, env = process.env, allowEmptyCommit = false) {
   if (result.status !== 0) {
     throw new Error(`${command} ${finalArgs.join(" ")} failed`)
   }
-}
-
-function trim(value) {
-  return value.trim()
 }

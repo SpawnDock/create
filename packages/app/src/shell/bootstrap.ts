@@ -1,5 +1,8 @@
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
-import { spawnSync, type SpawnSyncReturns } from "node:child_process"
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
+import {
+  spawnSync,
+  type SpawnSyncReturns,
+} from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { dirname, join, resolve } from "node:path"
 import { Console, Effect } from "effect"
@@ -9,6 +12,7 @@ import {
   buildMcpServerUrl,
   DEFAULT_INSPECT_PATH,
   DEFAULT_MCP_AGENTS,
+  GENERATED_PACKAGE_MANAGER,
   resolveClaimPath,
   type BootstrapClaim,
   type BootstrapSummary,
@@ -18,9 +22,7 @@ import {
   resolveProjectContext,
 } from "../core/bootstrap.js"
 
-const TEMPLATE_OVERLAY_DIR = resolve(
-  fileURLToPath(new URL("../../../template-nextjs-overlay", import.meta.url)),
-)
+const TEMPLATE_OVERLAY_DIR = resolveTemplateOverlayDir()
 
 interface BootstrapPreflightTarget {
   readonly projectDir: string
@@ -280,8 +282,29 @@ const installDependencies = (projectDir: string): Effect.Effect<void, Error> =>
       return
     }
 
-    yield* runCommand("pnpm", ["install"], projectDir)
-    yield* Console.log("Dependencies installed with pnpm.")
+    const pnpmResult = yield* runCommand("pnpm", ["install"], projectDir, false)
+    if (pnpmResult.status === 0) {
+      yield* Console.log("Dependencies installed with pnpm.")
+      return
+    }
+
+    const npxResult = yield* runCommand("npx", ["-y", GENERATED_PACKAGE_MANAGER, "install"], projectDir, false)
+    if (npxResult.status === 0) {
+      yield* Console.log("Dependencies installed with pnpm.")
+      return
+    }
+
+    yield* Effect.fail(
+      new Error(
+        [
+          "Failed to install project dependencies with pnpm.",
+          `corepack: ${formatCommandFailure(corepackResult, "corepack", ["pnpm", "install"])}`,
+          `pnpm: ${formatCommandFailure(pnpmResult, "pnpm", ["install"])}`,
+          `npx fallback: ${formatCommandFailure(npxResult, "npx", ["-y", GENERATED_PACKAGE_MANAGER, "install"])}`,
+          "Install Node.js 20+ with Corepack enabled, or install pnpm globally, then rerun the bootstrap command.",
+        ].join("\n"),
+      ),
+    )
   })
 
 const registerAgentIntegrations = (
@@ -512,6 +535,15 @@ const isKnownClaimErrorCode = (errorCode: string | null): boolean =>
   errorCode === "TokenAlreadyClaimed" ||
   errorCode === "TokenNotFound" ||
   errorCode === "project_not_found"
+
+function resolveTemplateOverlayDir(): string {
+  const candidates = [
+    fileURLToPath(new URL("../../template-nextjs-overlay", import.meta.url)),
+    fileURLToPath(new URL("../../../template-nextjs-overlay", import.meta.url)),
+  ] as const
+
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0]
+}
 
 const WINDOWS_CMD_SHIMS = new Set(["codex", "corepack", "npm", "npx", "pnpm"])
 
