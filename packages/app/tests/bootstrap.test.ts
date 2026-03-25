@@ -129,9 +129,13 @@ describe("template overlay", () => {
     const skillPath = fileURLToPath(
       new URL("../template-nextjs-overlay/.agents/skills/tma-knowledge-search/SKILL.md", import.meta.url),
     )
+    const skillScriptPath = fileURLToPath(
+      new URL("../template-nextjs-overlay/.agents/skills/tma-knowledge-search/scripts/search_tma_knowledge.mjs", import.meta.url),
+    )
 
     expect(existsSync(claudePath)).toBe(true)
     expect(existsSync(skillPath)).toBe(true)
+    expect(existsSync(skillScriptPath)).toBe(true)
   })
 })
 

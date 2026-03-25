@@ -31,6 +31,8 @@ Your job is to build and improve a production-ready Telegram Mini App in this re
 
 - When local repo context is not enough for a Telegram Mini App or SpawnDock-specific implementation question, use the local `tma-knowledge-search` skill before generic web search.
 - In generated projects the local skill lives at `.agents/skills/tma-knowledge-search`.
+- Run the bundled search script with Node from the project root: `node .agents/skills/tma-knowledge-search/scripts/search_tma_knowledge.mjs "<query>"`.
+- Do not use Python for this skill.
 - Query the skill in English and ask one focused implementation question at a time.
 - Read the returned `answer` first, then inspect `sources` when they are present.
 - SpawnDock bootstrap also mirrors the same skill into `~/.codex/skills/tma-knowledge-search` when possible so Codex can discover it natively.

@@ -10,9 +10,10 @@ Use this skill when local repo context is not enough for a Telegram Mini App que
 ## Workflow
 
 1. Form a focused English query about the TMA implementation detail you need.
-2. Run `scripts/search_tma_knowledge.py "<query>"`.
-3. Read the returned `answer` first, then inspect any `sources`.
-4. Use the API result as the primary TMA-specific reference in your answer or implementation plan.
+2. From the project root, run `node .agents/skills/tma-knowledge-search/scripts/search_tma_knowledge.mjs "<query>"`.
+3. If you are already inside the skill directory, run `node scripts/search_tma_knowledge.mjs "<query>"`.
+4. Read the returned `answer` first, then inspect any `sources`.
+5. Use the API result as the primary TMA-specific reference in your answer or implementation plan.
 
 ## Query Rules
 
@@ -30,6 +31,6 @@ Use this skill when local repo context is not enough for a Telegram Mini App que
 
 ## Resources
 
-- `scripts/search_tma_knowledge.py`: sends the POST request and prints a readable summary or raw JSON.
+- `scripts/search_tma_knowledge.mjs`: sends the POST request and prints a readable summary or raw JSON.
 - The script automatically uses `SPAWNDOCK_API_TOKEN`, `API_TOKEN`, or the nearest `spawndock.config.json` `apiToken` when available.
 - `references/api.md`: request and response contract for the knowledge endpoint.
